@@ -4,8 +4,9 @@ Generate flat HTML content for off-line access to documentation from work. (Resp
 
 ## Overview
 
-The WikiToHTML.pl script was designed to provide a quick and easy way for writers to pull content from MediaWiki into HTML format that should then be tweaked and edited to meet the needs of their project team. It should be distributed as a .rar archive that contains the following files:
-- readme.html - This file, containing instructions about using the conversion script.
+The WikiToHTML.pl script was designed to provide a quick and easy way for writers to pull content from MediaWiki into HTML format that should then be tweaked and edited to meet the needs of their project team. It should be distributed with the following files:
+- LICENSE - Open source licensing information (MIT).
+- README.md - This file, containing instructions about using the conversion script.
 - WikiToHTML.pl - The perl script that generates HTML content.
 - default_style.css - The default stylesheet to be used if no alternate skin is specified. (Note: support for alternate skins is a possible future improvement and not yet implemented.)
 
