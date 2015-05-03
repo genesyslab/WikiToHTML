@@ -276,6 +276,8 @@ foreach my $curversion (@version){
 		if (get_url()){
 			# remove any comments to avoid picking up bad pages
 			$pagecontent =~ s/<!--(?:.*)-->/<!-- -->/g;
+			# remove excess blank lines from TOC
+			$pagecontent =~ s/<p><br \/>\n<\/p>\n//g;
 			# create a list of page names from the TOC page content
 			$searchstring = '<a href="' . $subwiki . '/Documentation:' . $product . ':' . $curmanual . ':(.*):' . $curversion . '">';
 			@pagelist = ( $pagecontent =~ /$searchstring/g );
