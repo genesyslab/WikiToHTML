@@ -351,9 +351,11 @@ Genesys Offline Documentation
 				if (get_url()){
 					# set the filename
 					$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . "\\" . $topic . ".html";	
+					# set topicheading to the correct H1 title and trim string
 					$topicheading = $pagecontent;
-					$topicheading =~ s/.*<span class="mw-headline" id=".*">(.*)<\/span><\/h1>[\s\S]*/$1/g;
-					# update new copy of TOC
+					$topicheading =~ s/[\s\S]*<span class="mw-headline" id=".*">(.*)<\/span><\/h1>[\s\S]*/$1/g;
+					$topicheading =~ s/^\s+|\s+$//g;
+					# update new copy of TOC with the correct H1 title
 					$newTOC =~ s/>$topic<\/a>/>$topicheading<\/a>/g;
 #					# pre-processing may be necessary for some skins
 #					if ($skin eq "&useskin=???") {
