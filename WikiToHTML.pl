@@ -16,6 +16,7 @@ use File::Basename;
 use File::Slurp;
 
 # initialize variables
+$protocol = "http";
 $baseurl = "docs.genesys.com"; $subwiki = "";				# default value of base url is our main docs.genesys.com site; no subwiki by default
 $product = ''; @version = (); @manual = ();							# basic variables to track the product/versions/manuals being converted to static HTML
 $username = ''; $password = '';										# only required if logging in to wiki (NOT IMPLEMENTED YET)
@@ -48,6 +49,7 @@ while ($argnum <= $#ARGV){
 		when ("-skin") {$skin=$ARGV[++$argnum];}
 		when ("-baseurl") {$baseurl=$ARGV[++$argnum];}
 		when ("-subwiki") {$subwiki=$ARGV[++$argnum];}
+		when ("-ssl") {$protocol="https";++$argnum;}
 	}
 	$argnum++;
 }
@@ -72,7 +74,7 @@ if ($username ne '') {
 	print "Attempting to log in.\n";
 	#-----------------------------------------------
 
-	$url ='http://' . $sourceurl . '/index.php?title=Special:UserLogin';
+	$url = $protocol . '://' . $sourceurl . '/index.php?title=Special:UserLogin';
 	if (get_url()){
 		# key login form details: wpName=username, wpPassword=password, wpLoginAttempt to submit
 		$mech->form_name("userlogin");
@@ -92,7 +94,7 @@ if (scalar(@version)==0) {
 	# print a heads-up of what's happening
 	print "Getting a list of versions.\n";
 	#-----------------------------------------------
-	$url = 'http://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':Versions&action=render';
+	$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':Versions&action=render';
 	if (get_url()){
 		# create a list of versions from the page content
 		@version = ( $pagecontent =~ /<p>Version\ (.*)\ \(/g );
@@ -108,7 +110,7 @@ if (scalar(@manual)==0) {
 	# print a heads-up of what's happening
 	print "Getting a list of manuals.\n";
 	#-----------------------------------------------
-	$url = 'http://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':Manuals&action=render';
+	$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':Manuals&action=render';
 	if (get_url()){
 		# create a list of manuals from the page content
 		$searchstring = 'Documentation:' . $product . ':(.*)TOC';
@@ -172,7 +174,7 @@ foreach my $curversion (@version){
 		
 		if ($skin ne 'none'){
 			# get CSS from the selected skin
-			$url = 'http://' . $sourceurl . '/skins/' . $skin . '/main.css';
+			$url = $protocol . '://' . $sourceurl . '/skins/' . $skin . '/main.css';
 			if (get_url()){
 				$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\main.css';
 				write_file();
@@ -192,15 +194,15 @@ foreach my $curversion (@version){
 			$curimage =~ s/"//g;
 			# check for images from the skin folder
 			if ($skin ne 'none') {
-				$status = getstore("http://" . $sourceurl . "/skins/" . $skin . "/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
+				$status = getstore( $protocol . "://" . $sourceurl . "/skins/" . $skin . "/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
 			}
 			else {
 				# note: default skin is based on help skin; try drawing images there
-				$status = getstore("http://" . $sourceurl . "/skins/help/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
+				$status = getstore( $protocol . "://" . $sourceurl . "/skins/help/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
 			}
 			# if image not found under skin folder, check under ponydocs skin
 			if (!is_success($status)){
-				getstore("http://" . $sourceurl . "/skins/ponydocs/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
+				getstore( $protocol . "://" . $sourceurl . "/skins/ponydocs/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
 			}
 		}
 		# string to add CSS to all pages being created
@@ -223,33 +225,33 @@ foreach my $curversion (@version){
 		}
 		</script>';
 		# add JavaScript for Tabber extension
-		$url = 'http://' . $sourceurl . '/extensions/Tabber/Tabber.js';
+		$url = $protocol . '://' . $sourceurl . '/extensions/Tabber/Tabber.js';
 		if (get_url()){
 			$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\Tabber.js';
 			write_file();
 		}
-		$url = 'http://' . $sourceurl . '/extensions/Tabber/Tabber.css';
+		$url = $protocol . '://' . $sourceurl . '/extensions/Tabber/Tabber.css';
 		if (get_url()){
 			$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\Tabber.css';
 			write_file();
 		}
 		# add JavaScript for MultiStep extension
-		$url = 'http://' . $sourceurl . '/extensions/MultiStep/scripts/jquery-1.10.2.min.js';
+		$url = $protocol . '://' . $sourceurl . '/extensions/MultiStep/scripts/jquery-1.10.2.min.js';
 		if (get_url()){
 			$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\Multistep_a.js';
 			write_file();
 		}
-		$url = 'http://' . $sourceurl . '/extensions/MultiStep/scripts/jquery-migrate-1.2.1.min.js';
+		$url = $protocol . '://' . $sourceurl . '/extensions/MultiStep/scripts/jquery-migrate-1.2.1.min.js';
 		if (get_url()){
 			$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\Multistep_b.js';
 			write_file();
 		}
-		$url = 'http://' . $sourceurl . '/extensions/MultiStep/scripts/main.js';
+		$url = $protocol . '://' . $sourceurl . '/extensions/MultiStep/scripts/main.js';
 		if (get_url()){
 			$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\Multistep_main.js';
 			write_file();
 		}
-		$url = 'http://' . $sourceurl . '/extensions/MultiStep/css/styles.css';
+		$url = $protocol . '://' . $sourceurl . '/extensions/MultiStep/css/styles.css';
 		if (get_url()){
 			$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\Multistep.css';
 			write_file();
@@ -271,7 +273,7 @@ foreach my $curversion (@version){
 		#-----------------------------------------------
 
 		# retrieve TOC for specified product/version/manual
-		$url = 'http://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':' . $curmanual . 'TOC' . $curversion . '&action=render';
+		$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':' . $curmanual . 'TOC' . $curversion . '&action=render';
 		# try to get the specified TOC page, and only continue if a TOC exists for the product/version/manual combination
 		if (get_url()){
 			# remove any comments to avoid picking up bad pages
@@ -289,7 +291,7 @@ foreach my $curversion (@version){
 			#-----------------------------------------------
 
 			# clean up links to other pages
-			$searchstring = '<a href="[http:\/\/docs\.genesys\.com\/]*' . $subwiki . '/Documentation:' . $product . ':' . $curmanual . ':';
+			$searchstring = '<a href="[' . $protocol . ':\/\/' . $baseurl . '\/]*' . $subwiki . '/Documentation:' . $product . ':' . $curmanual . ':';
 			$pagecontent =~ s/$searchstring/<a href="/g;
 			$searchstring = ':' . $curversion . '">';
 			if ($formatting eq 'frames'){
@@ -341,7 +343,7 @@ Genesys Offline Documentation
 
 			# process each page listed in the TOC
 			foreach my $topic (@pagelist){
-				$url = 'http://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':' . $curmanual . ':' . $topic .  ':' . $curversion;
+				$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':' . $curmanual . ':' . $topic .  ':' . $curversion;
 				if ($skin eq "none") {
 					$url = $url . '&action=render';
 				}
@@ -364,7 +366,7 @@ Genesys Offline Documentation
 #						...
 #					}
 					# remove unneeded reference to port 80
-					$pagecontent =~ s/docs\.genesys\.com:80/docs\.genesys\.com/g;
+					$pagecontent =~ s/$baseurl:80/$baseurl/g;
 					# loop through version/manual arrays when fixing links
 					foreach my $tempversion (@tempversion){
 						foreach my $tempmanual (@tempmanual){
@@ -382,9 +384,9 @@ Genesys Offline Documentation
 								$relativepath = '';
 							}
 							# remove target="_blank" calls to open offline help in separate windows
-							$pagecontent =~ s/<a href="http:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)" target="_blank"/<a href="http:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/$1"/g;
+							$pagecontent =~ s/<a href="$protocol:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)" target="_blank"/<a href="https:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/$1"/g;
 							# add .html to link target
-							$pagecontent =~ s/href="http:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)" class=/href="$relativepath$1.html" class=/g;
+							$pagecontent =~ s/href="$protocol:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)" class=/href="$relativepath$1.html" class=/g;
 							# fix any links that go directly to a section
 							$pagecontent =~ s/#(\S*)\.html/\.html#$1/g;							
 							#remove [edit] links if logged in
@@ -401,20 +403,20 @@ Genesys Offline Documentation
 					foreach my $tempimage (@imagelist){
 						$imagename = basename($tempimage->url);
 						# copy the images to a local folder
-						$imageurl = "http://" . $baseurl . "/" . $tempimage->url;
-						$imageurl =~ s/http:\/\/docs\.genesys\.com\/http:\/\/docs\.genesys\.com/http:\/\/docs\.genesys\.com/g;
+						$imageurl = $protocol . "://" . $baseurl . "/" . $tempimage->url;
+						$imageurl =~ s/$protocol:\/\/$baseurl\/$protocol:\/\/$baseurl/$protocol:\/\/$baseurl/g;
 						$status = getstore($imageurl, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/images/' . $imagename);
 						if (is_success($status)){
 							# edit the page to point to the right location
 							if ($subwiki ne "") {
-								$searchstring = 'src="[http://docs\.genesys\.com]*[' . $subwiki . ']*/images/(\S*)/' . $imagename;
+								$searchstring = 'src="[' . $protocol . '://' . $baseurl . ']*[' . $subwiki . ']*/images/(\S*)/' . $imagename;
 							}
 							else {
-								$searchstring = 'src="[http://docs\.genesys\.com]*/images/(\S*)/' . $imagename;
+								$searchstring = 'src="[' . $protocol . '://' . $baseurl . ']*/images/(\S*)/' . $imagename;
 							}
 							$replacestring = 'src="./images/' . $imagename;
 							$pagecontent =~ s/$searchstring/$replacestring/g;
-							$searchstring = 'http://' . $sourceurl . '/File:' . $imagename;
+							$searchstring = $protocol . '://' . $sourceurl . '/File:' . $imagename;
 							$replacestring = './images/' . $imagename;
 							$pagecontent =~ s/$searchstring/$replacestring/g;
 							
