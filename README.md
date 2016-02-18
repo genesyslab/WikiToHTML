@@ -1,5 +1,7 @@
 # WikiToHTML
 
+**Currently broken.** *Will be fixed in a couple of weeks when I get around to updating the script to account for server/software changes to our documentation site. Please check back later! -Ed J. Feb 17, 2016*
+
 Generate flat HTML content for off-line access to documentation from work. (Response to customer request.)
 
 ## Overview
