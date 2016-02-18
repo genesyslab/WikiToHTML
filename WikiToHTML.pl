@@ -388,11 +388,9 @@ Genesys Offline Documentation
 
 					foreach my $tempimage (@imagelist){
 						$imagename = basename($tempimage->url);
-print "\n\ngetting image: $imagename\n";
 						# copy the images to a local folder
 						$imageurl = $protocol . "://" . $sourceurl . $tempimage->url;
 						$imageurl =~ s/$protocol:\/\/$sourceurl\/$protocol:\/\/$sourceurl/$protocol:\/\/$sourceurl/g;
-print "image URL is: $imageurl\n\n";
 						$status = getstore($imageurl, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/images/' . $imagename);
 						if (is_success($status)){
 							# edit the page to point to the right location
