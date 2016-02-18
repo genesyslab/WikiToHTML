@@ -391,8 +391,16 @@ Genesys Offline Documentation
 						# copy the images to a local folder
 						$imageurl = $protocol . "://" . $sourceurl . $tempimage->url;
 						$imageurl =~ s/$protocol:\/\/$sourceurl\/$protocol:\/\/$sourceurl/$protocol:\/\/$sourceurl/g;
-						$status = getstore($imageurl, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/images/' . $imagename);
-						if (is_success($status)){
+						# check is image already exists
+						$targetimage = $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/images/' . $imagename;
+						if (-e $targetimage) {
+							$changeimageloc = true;
+						}
+						else {
+							$status = getstore($imageurl, $targetimage);
+							$changeimageloc = is_success($status);
+						}
+						if ($changeimageloc){
 							# edit the page to point to the right location
 							$searchstring = 'src="[' . $protocol . '://' . $sourceurl . ']*/images/(\S*)/' . $imagename;
 							$replacestring = 'src="./images/' . $imagename;
