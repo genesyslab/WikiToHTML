@@ -33,7 +33,7 @@ no warnings 'experimental::smartmatch';
 # autoflush stdout so that printed status updates are displayed nicely
 local $| = 1;
 
-print "---------------------------------------------\n";
+print "\n---------------------------------------------\n";
 print "--  Wiki to HTML Conversion Script v2.0   ---\n";
 print "---------------------------------------------\n\n";
 
@@ -357,13 +357,20 @@ Genesys Offline Documentation
 					foreach my $tempversion (@tempversion){
 						foreach my $tempmanual (@tempmanual){
 							# needs to build a relative path that is as shallow as possible for linking purposes!
+							$linktoTOC = "";
 							if ($tempversion ne $curversion){
 								# go back two levels to change version
 								$relativepath = "../../$tempversion/$tempmanual/";
+								if ($formatting eq 'frames'){
+									$linktoTOC =  "onClick=\"parent.toc.location='../../$tempversion/$tempmanual/TOC_$tempmanual.html'\"";
+								}
 							}
 							elsif ($tempmanual ne $curmanual){
 								# go back one level to change manual
 								$relativepath = "../$tempmanual/";
+								if ($formatting eq 'frames'){
+									$linktoTOC = " onClick=\"parent.toc.location='../$tempmanual/TOC_$tempmanual.html'\"";
+								}
 							}
 							else {
 								# no change for path required
@@ -372,9 +379,7 @@ Genesys Offline Documentation
 							# remove target="_blank" calls to open offline help in separate windows
 							$pagecontent =~ s/<a href="$protocol:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)" target="_blank"/<a href="https:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/$1"/g;
 							# add .html to link target
-							$pagecontent =~ s/href="https?:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)"/href="$relativepath$1.html"/g;
-							# href="https://docs.genesys.com/Documentation/PSDK/8.5.x/Deployment/NewinthisRelease"
-							# href="NewinthisRelease.html"
+							$pagecontent =~ s/href="https?:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)"/href="$relativepath$1.html"$linktoTOC/g;
 							# fix any links that go directly to a section
 							$pagecontent =~ s/#(\S*)\.html/\.html#$1/g;							
 							#remove [edit] links if logged in
