@@ -372,7 +372,9 @@ Genesys Offline Documentation
 							# remove target="_blank" calls to open offline help in separate windows
 							$pagecontent =~ s/<a href="$protocol:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)" target="_blank"/<a href="https:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/$1"/g;
 							# add .html to link target
-							$pagecontent =~ s/href="$protocol:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)" class=/href="$relativepath$1.html" class=/g;
+							$pagecontent =~ s/href="https?:\/\/$sourceurl\/Documentation\/$product\/$tempversion\/$tempmanual\/(\S*)"/href="$relativepath$1.html"/g;
+							# href="https://docs.genesys.com/Documentation/PSDK/8.5.x/Deployment/NewinthisRelease"
+							# href="NewinthisRelease.html"
 							# fix any links that go directly to a section
 							$pagecontent =~ s/#(\S*)\.html/\.html#$1/g;							
 							#remove [edit] links if logged in
