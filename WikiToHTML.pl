@@ -16,16 +16,15 @@ use File::Basename;
 use File::Slurp;
 
 # initialize variables
-$protocol = "http";
-$baseurl = "docs.genesys.com"; $subwiki = "";				# default value of base url is our main docs.genesys.com site; no subwiki by default
+$protocol = "https";
+$baseurl = "docs.genesys.com"; $subwiki = "";						# default value of base url is our main docs.genesys.com site; no subwiki by default
 $product = ''; @version = (); @manual = ();							# basic variables to track the product/versions/manuals being converted to static HTML
 $username = ''; $password = '';										# only required if logging in to wiki (NOT IMPLEMENTED YET)
-$formatting = 'frames'; $divopen = ''; $divclose = '';				# variables to support different types of formatting; allowable values: none, div, frames
+$formatting = 'frames'; $divopen = ''; $divclose = '';				# variables to support different types of formatting; allowable values: none, div, frames (default)
 $url = ''; @pagelist = (); $pagecontent = ''; $searchstring = '';	# variables used with WWW::Mechanize to get/process web content
 $basePath = "Wiki_HTML"; $filename = ''; $filecount=0;				# variables to handle file/folder creation
-@imagelist = (); $imagename = '';									# list of images used in convereted docs, to be copied locally and have paths adjusted
+@imagelist = (); $imagename = '';									# list of images used in converted docs, to be copied locally and have paths adjusted
 $stylecount = 1; $styles = '';	$openHTML = ''; $closeHTML = ''; 	# variables use to track and manage stylesheets in generated files
-$skin = 'none';														# could allow different skins in future instead of &action=render (based on &useskin=help)
 
 # set values based on command line parameters
 $argnum = 0;
@@ -35,7 +34,7 @@ no warnings 'experimental::smartmatch';
 local $| = 1;
 
 print "---------------------------------------------\n";
-print "--  Wiki to HTML Conversion Script v1.5   ---\n";
+print "--  Wiki to HTML Conversion Script v2.0   ---\n";
 print "---------------------------------------------\n\n";
 
 while ($argnum <= $#ARGV){
@@ -46,17 +45,20 @@ while ($argnum <= $#ARGV){
 		when ("-u") {$username=$ARGV[++$argnum]; $password=$ARGV[++$argnum];}
 		when ("-div") {$formatting = 'div';}
 		when ("-noframes") {$formatting = 'none';}
-		when ("-skin") {$skin=$ARGV[++$argnum];}
 		when ("-baseurl") {$baseurl=$ARGV[++$argnum];}
 		when ("-subwiki") {$subwiki=$ARGV[++$argnum];}
-		when ("-ssl") {$protocol="https";++$argnum;}
 	}
 	$argnum++;
 }
 
-# build base URL: two parameters, first to provide the domain (ex: "docs.genesys.com") and the second to provide any subwiki details (ex: "/i18n/DEU")
-$sourceurl = $baseurl . $subwiki;
-
+# build base URL: two parameters, first to provide the domain (ex: "docs.genesys.com") and the second to provide any subwiki details (ex: "fra")
+if ($subwiki ne '') {
+	$sourceurl = $subwiki . '.' . $baseurl;
+}
+else {
+	$sourceurl = $baseurl;
+}
+	
 # confirm that product has some value; exit script otherwise
 if ($product eq '') {
 	print "\nInvalid command line paramters.  Expected usage: \n";
@@ -65,15 +67,24 @@ if ($product eq '') {
 	exit;
 }
 # establish web connection
-$mech = WWW::Mechanize->new();
+$mech = WWW::Mechanize->new( );
+
+# test connection before starting
+$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation';
+if (get_url()){
+	print "Connection to documentation website successful.\n\n";
+}
+else {
+	print "Error: unable to connect to documentation website.\n$url\n\n";
+	exit;
+}
+
 # log in to the wiki (only if credentials were provided)
 if ($username ne '') {
-
 	#-----------------------------------------------
 	# print a heads-up of what's happening
 	print "Attempting to log in.\n";
 	#-----------------------------------------------
-
 	$url = $protocol . '://' . $sourceurl . '/index.php?title=Special:UserLogin';
 	if (get_url()){
 		# key login form details: wpName=username, wpPassword=password, wpLoginAttempt to submit
@@ -85,8 +96,9 @@ if ($username ne '') {
 	# ...
 }
 else {
-	print "Warning: No login details provided.\nRestricted and unreleased content will not be generated.\n";
+	print "Warning: No login details provided.\nAny restricted or unreleased documentation will not be included in results.\n";
 }
+
 # confirm that we have at least one version/manual; if not, populate with full list from wiki
 if (scalar(@version)==0) {
 	# retrieve versions page for specified product
@@ -97,11 +109,11 @@ if (scalar(@version)==0) {
 	$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':Versions&action=render';
 	if (get_url()){
 		# create a list of versions from the page content
-		@version = ( $pagecontent =~ /<p>Version\ (.*)\ \(/g );
+		@version = ( $pagecontent =~ /<p>Version (.*) \(/g );
 	}
 	else{
-		print "Warning: Unable to retrieve a list of versions.\n";
-		exit;
+		print "Error: Unable to retrieve a list of versions from $url\n";
+#		exit;
 	}
 }
 if (scalar(@manual)==0) {
@@ -117,7 +129,7 @@ if (scalar(@manual)==0) {
 		@manual = ( $pagecontent =~ /$searchstring/g );	
 	}
 	else{
-		print "Warning: Unable to retrieve a list of manuals.\n";
+		print "Error: Unable to retrieve a list of manuals from $url\n";
 		exit;
 	}
 }
@@ -172,34 +184,19 @@ foreach my $curversion (@version){
 		print "\n      Creating stylesheets and JavaScript\n";
 		#-----------------------------------------------
 		
-		if ($skin ne 'none'){
-			# get CSS from the selected skin
-			$url = $protocol . '://' . $sourceurl . '/skins/' . $skin . '/main.css';
-			if (get_url()){
-				$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\main.css';
-				write_file();
-			}
-		}
-		else {
-			# if using &action=render then use this default skin
-			$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\main.css';
-			$pagecontent = read_file('default_style.css');
-			write_file();
-		}
+		# if using &action=render then use this default skin
+		$filename = $basePath . "\\" . $product . "\\" . $curversion . "\\" . $curmanual . '\\styles\\main.css';
+		$pagecontent = read_file('default_style.css');
+		write_file();
+
 		# get images from the main.css file
 		$searchstring = 'url\((.*)\)';
 		@imagelist = ( $pagecontent =~ /$searchstring/g );
 		# copy the images to a local folder
 		foreach $curimage (@imagelist){
 			$curimage =~ s/"//g;
-			# check for images from the skin folder
-			if ($skin ne 'none') {
-				$status = getstore( $protocol . "://" . $sourceurl . "/skins/" . $skin . "/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
-			}
-			else {
-				# note: default skin is based on help skin; try drawing images there
-				$status = getstore( $protocol . "://" . $sourceurl . "/skins/help/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
-			}
+			# check for images from the skin folder (note: default behavior is based on help skin)
+			$status = getstore( $protocol . "://" . $sourceurl . "/skins/help/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
 			# if image not found under skin folder, check under ponydocs skin
 			if (!is_success($status)){
 				getstore( $protocol . "://" . $sourceurl . "/skins/ponydocs/" . $curimage, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/styles/' . $curimage);
@@ -278,10 +275,12 @@ foreach my $curversion (@version){
 		if (get_url()){
 			# remove any comments to avoid picking up bad pages
 			$pagecontent =~ s/<!--(?:.*)-->/<!-- -->/g;
+			# remove titles from TOC
+			$pagecontent =~ s/\<i\>title\:(.*)\<\/i\>/ /g;
 			# remove excess blank lines from TOC
 			$pagecontent =~ s/<p><br \/>\n<\/p>\n//g;
 			# create a list of page names from the TOC page content
-			$searchstring = '<a href="' . $subwiki . '/Documentation:' . $product . ':' . $curmanual . ':(.*):' . $curversion . '">';
+			$searchstring = '<a href="' . $protocol . ':\/\/' . $sourceurl . '/Documentation:' . $product . ':' . $curmanual . ':(.*):' . $curversion . '">';
 			@pagelist = ( $pagecontent =~ /$searchstring/g );
 			@temppagelist = @pagelist;
 
@@ -291,7 +290,7 @@ foreach my $curversion (@version){
 			#-----------------------------------------------
 
 			# clean up links to other pages
-			$searchstring = '<a href="[' . $protocol . ':\/\/' . $baseurl . '\/]*' . $subwiki . '/Documentation:' . $product . ':' . $curmanual . ':';
+			$searchstring = '<a href="[' . $protocol . ':\/\/' . $sourceurl . '\/]*/Documentation:' . $product . ':' . $curmanual . ':';
 			$pagecontent =~ s/$searchstring/<a href="/g;
 			$searchstring = ':' . $curversion . '">';
 			if ($formatting eq 'frames'){
@@ -343,14 +342,7 @@ Genesys Offline Documentation
 
 			# process each page listed in the TOC
 			foreach my $topic (@pagelist){
-				$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':' . $curmanual . ':' . $topic .  ':' . $curversion;
-				if ($skin eq "none") {
-					$url = $url . '&action=render';
-				}
-				else
-				{
-					$url = $url . '&useskin=' . $skin;
-				}
+				$url = $protocol . '://' . $sourceurl . '/index.php?title=Documentation:' . $product . ':' . $curmanual . ':' . $topic .  ':' . $curversion . '&action=render';
 				# get the specified topic page, set filename for writing, and prepare for processing
 				if (get_url()){
 					# set the filename
@@ -361,12 +353,6 @@ Genesys Offline Documentation
 					$topicheading =~ s/^\s+|\s+$//g;
 					# update new copy of TOC with the correct H1 title
 					$newTOC =~ s/>$topic<\/a>/>$topicheading<\/a>/g;
-#					# pre-processing may be necessary for some skins
-#					if ($skin eq "&useskin=???") {
-#						...
-#					}
-					# remove unneeded reference to port 80
-					$pagecontent =~ s/$baseurl:80/$baseurl/g;
 					# loop through version/manual arrays when fixing links
 					foreach my $tempversion (@tempversion){
 						foreach my $tempmanual (@tempmanual){
@@ -402,18 +388,15 @@ Genesys Offline Documentation
 
 					foreach my $tempimage (@imagelist){
 						$imagename = basename($tempimage->url);
+print "\n\ngetting image: $imagename\n";
 						# copy the images to a local folder
-						$imageurl = $protocol . "://" . $baseurl . "/" . $tempimage->url;
-						$imageurl =~ s/$protocol:\/\/$baseurl\/$protocol:\/\/$baseurl/$protocol:\/\/$baseurl/g;
+						$imageurl = $protocol . "://" . $sourceurl . $tempimage->url;
+						$imageurl =~ s/$protocol:\/\/$sourceurl\/$protocol:\/\/$sourceurl/$protocol:\/\/$sourceurl/g;
+print "image URL is: $imageurl\n\n";
 						$status = getstore($imageurl, $basePath . '/' . $product . '/' . $curversion . '/' . $curmanual . '/images/' . $imagename);
 						if (is_success($status)){
 							# edit the page to point to the right location
-							if ($subwiki ne "") {
-								$searchstring = 'src="[' . $protocol . '://' . $baseurl . ']*[' . $subwiki . ']*/images/(\S*)/' . $imagename;
-							}
-							else {
-								$searchstring = 'src="[' . $protocol . '://' . $baseurl . ']*/images/(\S*)/' . $imagename;
-							}
+							$searchstring = 'src="[' . $protocol . '://' . $sourceurl . ']*/images/(\S*)/' . $imagename;
 							$replacestring = 'src="./images/' . $imagename;
 							$pagecontent =~ s/$searchstring/$replacestring/g;
 							$searchstring = $protocol . '://' . $sourceurl . '/File:' . $imagename;

@@ -1,6 +1,4 @@
-# WikiToHTML
-
-**Currently broken.** *Will be fixed in a couple of weeks when I get around to updating the script to account for server/software changes to our documentation site. Please check back later! -Ed J. Feb 17, 2016*
+# WikiToHTML v2.0
 
 Generate flat HTML content for off-line access to documentation from work. (Response to customer request.)
 
@@ -41,17 +39,17 @@ In a Windows environment you could use the following steps:
 
 ### Script Usage
 
-`perl WikiToHTML.pl -p <product> [-v <version>] [-m <manual>] [-u <username> <password>] [-div|-noframes] [-baseurl <url>] [-subwiki <path>] [-skin <skin>]`
+`perl WikiToHTML.pl -p <product> [-v <version>] [-m <manual>] [-u <username> <password>] [-div|-noframes] [-baseurl <url>] [-subwiki <language code>]`
 
 The available parameters are:
-- `-p product`
-Product to convert to HTML. Required parameter.
-- `-v version`
+- `-p <product>`
+Product to convert to HTML; only one product can be converted each time the script is run. Required parameter.
+- `-v <version>`
 (Optional) Version to convert to HTML. If not provided, all versions for the specified product/manual(s) will be converted to HTML. Multiple -v version parameters can be used to convert multiple versions at one time.
-- `-m manual`
+- `-m <manual>`
 (Optional) Manual to convert to HTML. If not provided, all manuals for the specified product/version(s) will be converted to HTML. Multiple -m manual parameters can be used to convert multiple manuals at one time.
-- `-u username password`
-(Optional) Wiki login credentials. Not required if converting released content, but must be provided for unreleased content or the resulting HTML will not be accurate. There is currently no warning provided if login credentials are entered incorrectly.
+- `-u <username> <password>`
+(Optional) Wiki login credentials. Only useful if converting unreleased content to HTML. (Currently no warning provided if login credentials are invalid.)
 - `-div`
 (Optional) Uses divisions to break static HTML pages into two sections (TOC on the right and content on the left) instead of the default behavior of using frames. Differences include:
   - index.html - currently only shows TOC for -divs option, default frames also show content
@@ -59,11 +57,9 @@ Product to convert to HTML. Required parameter.
   - back button behavior - works better with frames
   - appearance - minor difference in appearance
 - `-noframes`
-(Optional) Generates static HTML that without the use of frames (or divisions) to provide users a TOC.
-- `-baseurl url`
+(Optional) Generates static HTML without the use of frames (or divisions) to provide users a TOC.
+- `-baseurl <url>`
 (Optional) Sets the base URL. If not entered, value defaults to "docs.genesys.com".
-- `-subwiki path`
+- `-subwiki <language code>`
 (Optional) Sets the subwiki path if target content isn't located in base URL folder. Default value is empty.
-Sample usage: -subwiki /i18n/DEU
-- `-skin skin`
-(Optional) Uses a different skin for pulling HTML instead of the action=render tag. Results have not been tested.
+Sample usage: -subwiki deu
